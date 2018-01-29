@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.1.2b1 (2018-01-29)
+--------------------
+- Development moved to github.
+- General improvements and update.
+
 1.1.2a0 (2017-04-01)
 --------------------
 - Development version.
