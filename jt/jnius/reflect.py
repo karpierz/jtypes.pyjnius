@@ -222,6 +222,3 @@ def ensureclass(clsname):
         return
     registers.append(clsname)
     autoclass(clsname)
-
-
-# eof

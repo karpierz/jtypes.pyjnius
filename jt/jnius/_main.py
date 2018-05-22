@@ -96,7 +96,7 @@ from ._jproxy  import PythonJavaClass, java_method
 from ._func    import cast, find_javaclass
 from ._jvm     import detach
 
-__all__ = ('metaclass', 'java_class', 'MetaJavaClass', 'JavaClass', 'JavaObject', 'JavaException',
-           'JavaField', 'JavaStaticField', 'JavaMethod', 'JavaStaticMethod', 'JavaMultipleMethod',
-           'PythonJavaClass', 'java_method',
+__all__ = ('metaclass', 'java_class', 'java_method', 'MetaJavaClass', 'JavaClass',
+           'JavaObject', 'JavaException', 'JavaField', 'JavaStaticField',
+           'JavaMethod', 'JavaStaticMethod', 'JavaMultipleMethod', 'PythonJavaClass',
            'cast', 'find_javaclass', 'detach')

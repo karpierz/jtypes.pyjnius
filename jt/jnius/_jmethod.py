@@ -83,6 +83,7 @@ class JavaMultipleMethod(object):
         score, signature = scores[-1]
 
         jm = methods[signature]
+
         jm.j_self = self.j_self
         return jm.__call__(*args)
 
@@ -154,43 +155,6 @@ class JavaMethod(object):
 
         return score
 
-    def __make_arguments(self, args):
-
-        from .__config__ import WITH_VALID
-
-        jvm = self.__jclass.jvm if self.is_static else get_jvm()
-
-        par_descrs = self.__definition_args
-        par_count  = len(par_descrs)
-        is_varargs = self.is_varargs
-
-        jargs = jvm.JArguments(par_count)
-        for pos, arg_definition, arg in zip(count(), par_descrs, args):
-            thandler = jvm.type_handler.get_handler(arg_definition)
-            if WITH_VALID and not thandler.valid(arg):
-                raise ValueError("Parameter value is not valid for required parameter type.")
-            thandler.setArgument(arg_definition, jargs, pos, arg)
-
-        return jargs
-
-    def __close_arguments(self, jargs, args):
-
-        from ._conversion import convert_jarray_to_python
-
-        par_descrs = self.__definition_args
-
-        for pos, arg_definition, arg in zip(count(), par_descrs, args):
-            jarg = jargs.arguments[pos]
-            is_array = (arg_definition[0] == "[")
-            if is_array:
-                elem_definition = arg_definition[1:]
-                jarr = jargs.jvm.JArray(None, jarg.l, borrowed=True) if jarg.l else None
-                result = convert_jarray_to_python(elem_definition, jarr)
-                try:
-                    arg[:] = result
-                except TypeError:
-                    pass
-
     def __get__(self, this, cls):
 
         if this is None:
@@ -260,6 +224,43 @@ class JavaMethod(object):
         self.__close_arguments(jargs, args)
         return result
 
+    def __make_arguments(self, args):
+
+        from .__config__ import WITH_VALID
+
+        jvm = self.__jclass.jvm if self.is_static else get_jvm()
+
+        par_descrs = self.__definition_args
+        par_count  = len(par_descrs)
+        is_varargs = self.is_varargs
+
+        jargs = jvm.JArguments(par_count)
+        for pos, arg_definition, arg in zip(count(), par_descrs, args):
+            thandler = jvm.type_handler.get_handler(arg_definition)
+            if WITH_VALID and not thandler.valid(arg):
+                raise ValueError("Parameter value is not valid for required parameter type.")
+            thandler.setArgument(arg_definition, jargs, pos, arg)
+
+        return jargs
+
+    def __close_arguments(self, jargs, args):
+
+        from ._conversion import convert_jarray_to_python
+
+        par_descrs = self.__definition_args
+
+        for pos, arg_definition, arg in zip(count(), par_descrs, args):
+            jarg = jargs.arguments[pos]
+            is_array = (arg_definition[0] == "[")
+            if is_array:
+                elem_definition = arg_definition[1:]
+                jarr = jargs.jvm.JArray(None, jarg.l, borrowed=True) if jarg.l else None
+                result = convert_jarray_to_python(elem_definition, jarr)
+                try:
+                    arg[:] = result
+                except TypeError:
+                    pass
+
 
 @public
 class JavaStaticMethod(JavaMethod):
@@ -267,6 +268,3 @@ class JavaStaticMethod(JavaMethod):
     def __new__(cls, definition, **kargs):
 
         return super(JavaStaticMethod, cls).__new__(cls, definition, static=True, **kargs)
-
-
-# eof

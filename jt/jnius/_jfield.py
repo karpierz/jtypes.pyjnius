@@ -76,6 +76,3 @@ class JavaStaticField(JavaField):
     def __new__(cls, definition, **kargs):
 
         return super(JavaStaticField, cls).__new__(cls, definition, static=True, **kargs)
-
-
-# eof

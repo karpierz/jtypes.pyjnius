@@ -1,6 +1,14 @@
 Changelog
 =========
 
+1.1.2b3 (2018-05-22)
+--------------------
+- Update required setuptools version.
+
+1.1.2b2 (2018-02-26)
+--------------------
+- Improve and simplify setup and packaging.
+
 1.1.2b1 (2018-01-29)
 --------------------
 - Development moved to github.
