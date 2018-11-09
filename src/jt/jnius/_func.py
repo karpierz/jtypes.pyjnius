@@ -27,10 +27,10 @@ def cast(destclass, obj):
 @annotate(name=Union[builtins.str, str])
 def find_javaclass(name):
 
-    from ._jvm    import get_jvm
+    from ._jvm    import JVM
     from .reflect import Class
 
-    jvm = get_jvm()
+    jvm = JVM.jvm
 
     try:
         jclass = jvm.JClass.forName(name)

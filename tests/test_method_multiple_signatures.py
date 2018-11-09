@@ -2,7 +2,8 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 import unittest
-from jt.jnius.reflect import autoclass
+from jnius.reflect import autoclass
+from jnius import JavaException  # <AK> added
 
 try:
     long
@@ -38,6 +39,13 @@ class MultipleSignature(unittest.TestCase):
     def test_multiple_methods_two_args(self):
         MultipleMethods = autoclass('org.jnius.MultipleMethods')
         self.assertEqual(MultipleMethods.resolve('one', 'two'), 'resolved two args')
+        # <AK> added
+        self.assertEqual(MultipleMethods.resolve_fixedargs('one', 'two'), 'resolved two String args')
+        with self.assertRaises(JavaException):
+            MultipleMethods.resolve_fixedargs('one')
+        with self.assertRaises(JavaException):
+            MultipleMethods.resolve_fixedargs(1, 1)
+        # </AK>
 
     def test_multiple_methods_two_string_and_an_integer(self):
         MultipleMethods = autoclass('org.jnius.MultipleMethods')
@@ -58,6 +66,14 @@ class MultipleSignature(unittest.TestCase):
     def test_multiple_methods_two_args_and_varargs(self):
         MultipleMethods = autoclass('org.jnius.MultipleMethods')
         self.assertEqual(MultipleMethods.resolve('one', 'two', 1, 2, 3), 'resolved two args and varargs')
+        # <AK> added
+        self.assertEqual(MultipleMethods.resolve_varargs('one', 'two', 1, 2, 3), 'resolved two String args and integer varargs')
+        self.assertEqual(MultipleMethods.resolve_varargs('one', 'two', 1, 2), 'resolved two String args and integer varargs')
+        self.assertEqual(MultipleMethods.resolve_varargs('one', 'two', 1), 'resolved two String args and integer varargs')
+        self.assertEqual(MultipleMethods.resolve_varargs('one', 'two'), 'resolved two String args and integer varargs')
+        with self.assertRaises(JavaException):
+            MultipleMethods.resolve_varargs('one')
+        # </AK>
 
     def test_multiple_methods_one_int_one_small_long_and_a_string(self):
         MultipleMethods = autoclass('org.jnius.MultipleMethods')

@@ -3,18 +3,17 @@ from __future__ import division
 from __future__ import absolute_import
 import sys
 import unittest
-from jt.jnius.reflect import autoclass
+from jnius.reflect import autoclass
 
 try:
     long
-except NameError:
+except NameError:  # pragma: no cover # <AK> added
     # Python 3
     long = int
 
 def py2_encode(uni):
-    if sys.version_info < (3, 0):
-        uni = uni.encode('utf-8')
-    return uni
+    # <AK> changed to one-line due to coverage
+    return uni.encode('utf-8') if sys.version_info < (3, 0) else uni
 
 
 class BasicsTest(unittest.TestCase):
@@ -70,6 +69,11 @@ class BasicsTest(unittest.TestCase):
         self.assertEquals(test2.fieldB, 10)
         self.assertEquals(test.fieldB, 127)
         self.assertEquals(test2.fieldB, 10)
+
+    def test_instance_getter_naming(self):
+        test = autoclass('org.jnius.BasicsTest')()
+        self.assertEquals(test.disabled, True)
+        self.assertEquals(test.enabled, False)
 
     def test_instance_set_fields(self):
         test = autoclass('org.jnius.BasicsTest')()

@@ -9,23 +9,23 @@ Installation
 Installation on the Desktop
 ---------------------------
 
-You need the Java JRE or JDK installed (openjdk will do). Then, just type::
+You need the JRE or JDK installed (openjdk will do). Then, just type::
 
     sudo python -m pip install --upgrade jtypes.pyjnius
 
 You can run the tests suite to make sure everything is running right::
 
-    python -m jt.jnius.tests
+    python -m jt.jnius.tests  # <AK> FIX it
 
 
 Installation for Android
 ------------------------
 
-To use jtypes.pyjnius in an Android app, you must include it in your compiled
+To use *jtypes.pyjnius* in an Android app, you must include it in your compiled
 Python distribution. You can add it to your requirements explicitly as follows.
 
 If you use `buildozer
-<https://buildozer.readthedocs.io/en/latest/>`__, add jtypes.pyjnius to your
+<https://buildozer.readthedocs.io/en/latest/>`__, add *jtypes.pyjnius* to your
 requirements in buildozer.spec::
 
   requirements = jtypes.pyjnius
@@ -43,12 +43,12 @@ To test that the installation worked, try::
 
 This should return a list of recipes available to be built.
 
-Then, you can use python-for-android directly, by adding jtypes.pyjnius
-to the  requirements argument when creating a dist or apk::
+Then, you can use python-for-android directly, by adding *jtypes.pyjnius*
+to the requirements argument when creating a dist or apk::
 
     p4a apk --requirements=jtypes.pyjnius
 
-or install jtypes.pyjnius permanently::
+or install *jtypes.pyjnius* permanently::
 
     sudo install --upgrade jtypes.pyjnius
 
@@ -58,7 +58,7 @@ Installation for Windows
 
 Python and pip must be installed and present in PATH.
 
-1. Download and install JDK and JRE:
+1. Download and install JRE or JDK:
     http://www.oracle.com/technetwork/java/javase/downloads/index.html
 
 2. Edit your system and environment variables (use the appropriate Java version):
@@ -72,6 +72,6 @@ Python and pip must be installed and present in PATH.
 
     python -m pip install --upgrade pip setuptools
 
-4. Install Pyjnius::
+4. Install *jtypes.pyjnius*::
 
     python -m pip install --upgrade jtypes.pyjnius

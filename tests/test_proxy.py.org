@@ -1,13 +1,20 @@
+# <AK> converted to unittest
+
 from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
-# from six.moves import range  #<AK> unnecessary
+# from six.moves import range  # <AK> unnecessary
+import unittest  # <AK> for jt.jnius additions
+import sys                                  # <AK> needed for enhancements
+if sys.version_info.major >= 3: long = int  # <AK> needed for enhancements
 
-from jt.jnius import autoclass, java_method, PythonJavaClass, cast
-from jt.jnius import JavaException  #<AK> for additions for jt.jnius
-# from nose.tools import *  #<AK> unnecessary
+from jnius import autoclass, java_method, PythonJavaClass, cast
+from jnius import java_implementer, JavaException  # <AK> for jt.jnius additions
+# from nose.tools import *  # <AK> unnecessary
 
-print('1: declare a TestImplem that implement Collection')
+
+def setUpModule():
+    print('0: declare a TestImplem that implement Collection')
 
 
 class TestImplemIterator(PythonJavaClass):
@@ -21,7 +28,7 @@ class TestImplemIterator(PythonJavaClass):
 
     @java_method('()Z')
     def hasNext(self):
-        return self.index < len(self.collection.data) - 1
+        return self.index < len(self.collection.data)  # <AK> fix, was: len(...) - 1
 
     @java_method('()Ljava/lang/Object;')
     def next(self):
@@ -31,7 +38,7 @@ class TestImplemIterator(PythonJavaClass):
 
     @java_method('()Z')
     def hasPrevious(self):
-        return self.index >= 0
+        return self.index - 1 >= 0  # <AK> fix, was: self.index >= 0
 
     @java_method('()Ljava/lang/Object;')
     def previous(self):
@@ -107,20 +114,34 @@ class TestBadSignature(PythonJavaClass):
 
     @java_method('(Landroid/bluetooth/BluetoothDevice;IB[])V')
     def bad_signature(self, *args):
-        pass
+        """"""  # <AK> changed due to coverage, was: pass
 
 
-#<AK> additions for jt.jnius
-class TestBadInterface(PythonJavaClass):
+# <AK> additions for jt.jnius
+
+class TestBadInterface1(PythonJavaClass):
     __javainterfaces__ = ['java/nonexistent/List']
 
 
-#<AK> makes a module-level code as unittests (ProxyTest)
+@java_implementer('java/nonexistent/List')
+class TestBadInterface2(PythonJavaClass):
+    pass
+
+
+class TestBadJavaContext(PythonJavaClass):
+    __javainterfaces__ = ['java/util/List']
+    __javacontext__ = "unknown context"
+
+
+# <AK> makes a module-level code as unittests (ProxyTest)
 class ProxyTest(unittest.TestCase):
 
     def test_proxies(self):
 
-        #<AK> extends tests for different types (not only for ints as in original)
+        Short = autoclass('java.lang.Short')
+        Float = autoclass('java.lang.Float')
+
+        # <AK> extends tests for different types (not only for ints as in original)
         for coll in (list(map(lambda x: bool(x % 2), range(10))),
                     #list(map(Short, range(10))),
                      list(map(int,   range(10))),
@@ -129,16 +150,45 @@ class ProxyTest(unittest.TestCase):
                      list(map(float, range(10))),
                      list(map(lambda x: chr(ord("A") + x), range(10)))):
 
-            print('2: instantiate the class, with some data')
+            print("1: instantiate the class '{}', with some data of '{}'".format(
+                  TestImplem.__name__, type(coll[0])))
             a = TestImplem(*coll)
             print(a)
             print(dir(a))
 
-            print('tries to get a ListIterator')
+            print('2: Tries to get a ListIterator')
             iterator = a.listIterator()
             print('iterator is', iterator)
+            self.assertIs(iterator.hasPrevious(), False)
             while iterator.hasNext():
-                print('at index', iterator.index, 'value is', iterator.next())
+                idx  = iterator.index
+                elem = iterator.next()
+                print('at index', idx, 'value is', elem)
+                # <AK> added
+                prev = iterator.previous()
+                self.assertEqual(prev, elem)
+                self.assertEqual(iterator.next(), elem)
+                self.assertEqual(elem, coll[idx])
+                self.assertEqual(iterator.get(iterator.index), coll[idx])
+                self.assertIs(iterator.hasPrevious(), True)
+                self.assertEqual(iterator.previousIndex(), idx)
+                # </AK>
+            # <AK> added
+            iterator = a.listIteratorI(5)
+            print('iterator (from index) is', iterator)
+            self.assertIs(iterator.hasPrevious(), True)
+            while iterator.hasNext():
+                idx  = iterator.index
+                elem = iterator.next()
+                print('at index', idx, 'value is', elem)
+                prev = iterator.previous()
+                self.assertEqual(prev, elem)
+                self.assertEqual(iterator.next(), elem)
+                self.assertEqual(elem, coll[idx])
+                self.assertEqual(iterator.get(iterator.index), coll[idx])
+                self.assertIs(iterator.hasPrevious(), True)
+                self.assertEqual(iterator.previousIndex(), idx)
+            # </AK>
 
             print('3: Do cast to a collection')
             a2 = cast('java/util/Collection', a.j_self)
@@ -147,52 +197,61 @@ class ProxyTest(unittest.TestCase):
             print('4: Try few method on the collection')
             Collections = autoclass('java.util.Collections')
             #print(Collections.enumeration(a))
-            #print(Collections.enumeration(a))
+
             ret = Collections.max(a)
+            print('Collections.max():', ret)
+            self.assertEqual(ret, max(coll))  # <AK> added
+            # XXX We have issues for methods with multiple signature
+            ret = Collections.max(a2)
+            self.assertEqual(ret, max(coll))  # <AK> added
 
-            print("reverse")
+            print('Order of data before Collections.reverse():', a.data)
+            Collections.reverse(a)
             print(Collections.reverse(a))
-            print(a.data)
+            print('Order of data after  Collections.reverse():', a.data)
+            coll = list(reversed(coll))     # <AK> added
+            self.assertEqual(a.data, coll)  # <AK> added
 
-            print("before swap")
+            print('Order of data before Collections.swap(2,3):', a.data)
+            Collections.swap(a, 2, 3)
             print(Collections.swap(a, 2, 3))
-            print("after swap")
-            print(a.data)
+            print('Order of data after  Collections.swap(2,3):', a.data)
+            coll[2], coll[3] = coll[3], coll[2]  # <AK> added
+            self.assertEqual(a.data, coll)       # <AK> added
 
-            print("rotate")
+            print('Order of data before Collections.rotate(5):', a.data)
+            Collections.rotate(a, 5)
             print(Collections.rotate(a, 5))
-            print(a.data)
+            print('Order of data after  Collections.rotate(5):', a.data)
+            coll = coll[-5:] + coll[:-5]    # <AK> added
+            self.assertEqual(a.data, coll)  # <AK> added
 
-            print('Order of data before shuffle()', a.data)
+            print('Order of data before shuffle():', a.data)
+            Collections.shuffle(a)
             print(Collections.shuffle(a))
-            print('Order of data after shuffle()', a.data)
-
-
-            # XXX We have issues for methosd with multiple signature
-            print('-> Collections.max(a)')
-            print(Collections.max(a2))
+            print('Order of data after  shuffle():', a.data)
             #print('-> Collections.shuffle(a)')
             #print(Collections.shuffle(a2))
 
     def test_bad_signature(self):
         # test bad signature
-        threw = False
-        try:
+        with self.assertRaises(Exception,  # <AK> changed to use 'with'
+                               msg="Failed to throw for bad signature") as exc:
             TestBadSignature()
-        except Exception:
-            threw = True
 
-        if not threw:
-            raise Exception("Failed to throw for bad signature")
+    # <AK> additions for jt.jnius
 
-    #<AK> additions for jt.jnius
     def test_bad_interface(self):
         # test bad interface
-        threw = False
-        try:
-            TestBadInterface()
-        except JavaException:
-            threw = True
+        for TestBadInterface in (TestBadInterface1, TestBadInterface2):
+            with self.assertRaises(JavaException,
+                                   msg="Failed to throw for bad interface") as exc:
+                TestBadInterface()
 
-        if not threw:
-            raise Exception("Failed to throw for bad interface")
+    def test_bad_javacontext(self):
+        # test bad __javacontext__
+        with self.assertRaises(Exception,
+                               msg="Failed to throw for bad __javacontext__") as exc:
+            TestBadJavaContext()
+
+    # </AK>

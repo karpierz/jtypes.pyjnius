@@ -107,7 +107,7 @@ class ByteArray(object):
 
     def __str__(self):
 
-        return u"<ByteArray size={} at {:#x}>".format(len(self), id(self))
+        return "<ByteArray size={} at {:#x}>".format(len(self), id(self))
 
     def tolist(self):
 

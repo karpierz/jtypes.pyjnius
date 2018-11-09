@@ -1,14 +1,14 @@
-from __future__ import print_function   #<AK> missing
-from __future__ import division         #<AK> missing
-from __future__ import absolute_import  #<AK> missing
+from __future__ import print_function   # <AK> missing
+from __future__ import division         # <AK> missing
+from __future__ import absolute_import  # <AK> missing
 import unittest
 
-from jt.jnius import autoclass, java_method, PythonJavaClass, cast
+from jnius import autoclass, java_method, PythonJavaClass, cast
 
-from jt.jnius.signatures import *
+from jnius.signatures import *
 
-JObject = autoclass('java.lang.Object')  #<AK> fix, was: 'java/lang/Object'
-JString = autoclass('java.lang.String')  #<AK> fix, was: 'java/lang/String'
+JObject = autoclass('java/lang/Object')
+JString = autoclass('java/lang/String')
 JListIterator = autoclass("java.util.ListIterator")
 
 class TestImplemIterator(PythonJavaClass):
@@ -22,7 +22,7 @@ class TestImplemIterator(PythonJavaClass):
 
     @with_signature(jboolean, [])
     def hasNext(self):
-        return self.index < len(self.collection.data) - 1
+        return self.index < len(self.collection.data)  # <AK> fix, was: len(...) - 1
 
     @with_signature(JObject, [])
     def next(self):
@@ -32,7 +32,7 @@ class TestImplemIterator(PythonJavaClass):
 
     @with_signature(jboolean, [])
     def hasPrevious(self):
-        return self.index >= 0
+        return self.index - 1 >= 0  # <AK> fix, was: self.index >= 0
 
     @with_signature(JObject, [])
     def previous(self):
@@ -104,7 +104,7 @@ class TestImplem(PythonJavaClass):
         return it
 
 
-from jt.jnius.reflect import autoclass
+from jnius.reflect import autoclass
 
 class SignaturesTest(unittest.TestCase):
 

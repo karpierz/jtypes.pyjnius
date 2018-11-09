@@ -4,7 +4,7 @@
 
 from ...jvm.lib.compat import *
 from ...jvm.lib import annotate
-from ...jvm     import jni
+from ...        import jni
 
 from ...jvm.java.jnij import jnij
 from ...jvm.java      import registerNatives
@@ -18,6 +18,4 @@ class jnius_reflect_ProxyHandler(jnij):
 
         from .org.jnius.reflect import ProxyHandler
         unregisterNatives(jenv, "com.jt.reflect.ProxyHandler")
-        registerNatives(jenv,   "com.jt.reflect.ProxyHandler",
-                        (ProxyHandler.invoke,
-                         ProxyHandler.finalize))
+        registerNatives(jenv,   "com.jt.reflect.ProxyHandler", ProxyHandler)

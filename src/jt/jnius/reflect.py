@@ -6,8 +6,7 @@ from ..jvm.lib.compat import *
 from ..jvm.lib import annotate
 from ..jvm.lib import public
 
-from ..jvm import EJavaModifiers
-
+from ._constants import EJavaModifiers
 from ._main import (java_class, MetaJavaClass, JavaClass, JavaField, JavaStaticField,
                     JavaMethod, JavaStaticMethod, JavaMultipleMethod, JavaException,
                     find_javaclass)
@@ -107,25 +106,20 @@ class Method(object):
     isVarArgs         = JavaMethod("()Z")
 
 
-def get_signature(cls):
-
-    return cls.j_self.getSignature()
-
-
 @public
 def autoclass(clsname):
 
-    from ._jvm import get_jvm
+    from ._jvm import JVM
 
-    jvm = get_jvm()
+    jvm = JVM.jvm
 
-    name = clsname.encode("utf-8").translate(jvm.JClass.name_utrans).decode("utf-8")
-    cls = MetaJavaClass.get_javaclass(name)
+    cls = MetaJavaClass.get_javaclass(clsname.replace(".", "/"))
     if cls:
         return cls
 
     try:
-        jclass = jvm.JClass.forName(clsname)
+        # name = clsname.encode("utf-8").translate(jvm.JClass.name_utrans).decode("utf-8")
+        jclass = jvm.JClass.forName(clsname.replace("/", "."))
     except:
         raise JavaException("Class not found {!r}".format(clsname))
 
@@ -139,7 +133,7 @@ def autoclass(clsname):
     clsdict["__javaconstructor__"] = definitions
 
     methods       = jclass.getMethods()
-    methods_names = [x.getName() for x in methods]
+    methods_names = [method.getName() for method in methods]
     for method, method_name in zip(methods, methods_names):
         if method_name in clsdict:
             continue
@@ -153,7 +147,8 @@ def autoclass(clsname):
                                     if is_static else
                                     JavaMethod(signature, varargs=is_varargs))
             if method_name != "getClass" and bean_getter(method_name) and len(method.getParameterTypes()) == 0:
-                clsdict[lower_name(method_name[3:])] = (lambda n: property(lambda self: getattr(self, n)()))(method_name)
+                clsdict[lower_name(method_name[2 if method_name.startswith("is") else 3:])] = \
+                        (lambda n: property(lambda self: getattr(self, n)()))(method_name)
         else:
             # multiple signatures
             definitions = []
@@ -174,11 +169,9 @@ def autoclass(clsname):
             # initialize the subclass before getting the Class.forName
             # otherwise isInstance does not know of the subclass
             mock_exception_object = autoclass(exc.classname)()
-            if find_javaclass("java.lang.IndexOutOfBoundsException").isInstance(mock_exception_object):
-                # python for...in iteration checks for end of list by waiting for IndexError
-                raise IndexError()
-            else:
-                raise exc
+            # python for...in iteration checks for end of list by waiting for IndexError
+            raise IndexError() if find_javaclass("java.lang.IndexOutOfBoundsException"
+                                                ).isInstance(mock_exception_object) else exc
 
     for iclass in jclass.getInterfaces():
         if iclass.getName() == "java.util.List":
@@ -198,6 +191,11 @@ def autoclass(clsname):
     clsdict["__javaclass__"] = clsname.replace(".", "/")
 
     return MetaJavaClass(clsname, (), clsdict)
+
+
+def get_signature(cls):
+
+    return cls.j_self.getSignature()
 
 
 def bean_getter(s):

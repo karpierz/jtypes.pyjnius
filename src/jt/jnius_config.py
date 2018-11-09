@@ -16,19 +16,16 @@ def set_options(*opts):
 
     """Sets the list of options to the JVM. Removes any previously set options."""
 
-    if vm_running:
-        raise ValueError("VM is already running, can't set options")
-
-    globals()["options"] = opts
+    __check_vm_running("can't set options")
+    global options
+    options = list(opts)
 
 
 def add_options(*opts):
 
     """Appends options to the list of VM options."""
 
-    if vm_running:
-        raise ValueError("VM is already running, can't set options")
-
+    __check_vm_running("can't set options")
     global options
     options.extend(opts)
 
@@ -48,11 +45,9 @@ def set_classpath(*path):
     Replaces any existing classpath, overriding the CLASSPATH environment variable.
     """
 
-    if vm_running:
-        raise ValueError("VM is already running, can't set classpath")
-
+    __check_vm_running("can't set classpath")
     global classpath
-    classpath = path
+    classpath = list(path)
 
 
 def add_classpath(*path):
@@ -62,9 +57,7 @@ def add_classpath(*path):
     Replaces any existing classpath, overriding the CLASSPATH environment variable.
     """
 
-    if vm_running:
-        raise ValueError("VM is already running, can't set classpath")
-
+    __check_vm_running("can't set classpath")
     global classpath
     if classpath is None:
         classpath = list(path)
@@ -76,17 +69,17 @@ def get_classpath():
 
     """Retrieves the classpath the JVM will use."""
 
-    from os      import environ
-    from os      import pathsep
+    from os      import environ, pathsep
     from os.path import realpath
-   #from pkg_resources import resource_filename
 
     # add a path to java classes packaged with jnius
+    from pkg_resources import resource_filename
+    #return_classpath = [realpath(resource_filename(__name__, "jnius/_java"))]
     return_classpath = []
 
     global classpath
     if classpath is not None:
-        return list(classpath) + return_classpath
+        return classpath + return_classpath
     elif "CLASSPATH" in environ:
         return environ["CLASSPATH"].split(pathsep) + return_classpath
     else:
@@ -106,3 +99,9 @@ def expand_classpath():
         else:
             paths.extend(glob(path + ".[Jj][Aa][Rr]"))
     return pathsep.join(paths)
+
+
+def __check_vm_running(msg):
+
+    if vm_running:
+        raise ValueError("VM is already running, " + msg)

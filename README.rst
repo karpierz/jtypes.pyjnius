@@ -8,21 +8,23 @@ Dynamic access to Java classes from Python.
 Overview
 ========
 
-  | jtypes.pyjnius is a bridge between Python and Java, allowing these to intercommunicate.
+  | **jtypes.pyjnius** is a bridge between Python and Java, allowing these to intercommunicate.
   | It is an effort to allow python programs full access to Java class libraries.
-  |
-  | jtypes.pyjnius is a lightweight Python package, based on the *ctypes* or *cffi* library.
-  | It is an almost fully compliant implementation of Kivy Team's *PyJNIus* package by
-    reimplementing whole its functionality in a clean Python instead of Cython.
+
+  `PyPI record <https://pypi.python.org/pypi/jtypes.pyjnius>`__.
+
+  | **jtypes.pyjnius** is a lightweight Python package, based on the *ctypes* or *cffi* library.
+  | It is an almost fully compliant implementation of Kivy Team's **PyJNIus** package
+    by reimplementing whole its functionality in a clean Python instead of Cython.
 
 About PyJNIus:
 --------------
 
 Borrowed from the `original website <https://pyjnius.readthedocs.io>`__:
 
-  PyJNIus is a Python library for accessing Java classes.
+  **PyJNIus** is a Python library for accessing Java classes.
 
-  A minimal PyJNIus example looks something like this:
+  A minimal **PyJNIus** example looks something like this:
 
   *Quick overview*
 
@@ -57,7 +59,7 @@ Prerequisites:
 + Python 2.7 or higher or 3.4 or higher
 
   * http://www.python.org/
-  * 2.7 and 3.4 are primary test environments.
+  * 2.7 and 3.6 are primary test environments.
   * For usage with python-for-android:
 
     #. Get http://github.com/kivy/python-for-android
@@ -109,4 +111,4 @@ License
 Authors
 =======
 
-* Adam Karpierz <python@python.pl>
+* Adam Karpierz <adam@karpierz.net>

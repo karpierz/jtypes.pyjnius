@@ -3,9 +3,10 @@ include CHANGES.rst
 include LICENSE
 include tox.ini
 
-graft jt
-#exclude jt/jnius/_jproxy.py
-#exclude jt/jnius/_typehandler.py
+graft src
+#prune src/jt/jnius/_typehandler
+#include src/jt/jnius/_typehandler/__init__.py
+#exclude src/jt/jnius/_jproxy.py
 
 graft docs
 prune docs/_build

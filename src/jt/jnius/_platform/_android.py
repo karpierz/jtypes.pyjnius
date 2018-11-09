@@ -9,4 +9,9 @@
 def start_jvm(jvm):
 
     # TODO ...
-    return SDL_ANDROID_GetJNIEnv()[0]
+    jvm.__class__.jenv = SDL_ANDROID_GetJNIEnv()[0]
+
+
+def stop_jvm(jvm):  # <AK> added
+
+    pass

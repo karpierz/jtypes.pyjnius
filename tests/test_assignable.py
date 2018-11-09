@@ -2,7 +2,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 import unittest
-from jt.jnius import autoclass, JavaException
+from jnius import autoclass, JavaException
 
 
 class AssignableFrom(unittest.TestCase):
@@ -13,6 +13,7 @@ class AssignableFrom(unittest.TestCase):
 
         a = ArrayList()
         # addAll accept Collection, Object must failed
-        self.assertRaises(JavaException, a.addAll, Object())
+        with self.assertRaises(JavaException):  # <AK> changed to use 'with'
+            a.addAll(Object())
         # while adding another ArrayList must be ok.
         a.addAll(ArrayList())

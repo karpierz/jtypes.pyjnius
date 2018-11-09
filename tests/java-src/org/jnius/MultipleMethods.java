@@ -33,4 +33,18 @@ public class MultipleMethods {
     public static String resolve(int i, long j, String k) {
     return "resolved one int, one long and a string";
     }
+
+    // <AK> added
+    public static String resolve_varargs(String i, String j, int... integers) {
+	return "resolved two String args and integer varargs";
+    }
+
+    public static String resolve_fixedargs(int i) {
+	return "resolved one integer arg";
+    }
+
+    public static String resolve_fixedargs(String i, String j) {
+	return "resolved two String args";
+    }
+    // </AK>
 }

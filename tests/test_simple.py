@@ -2,10 +2,10 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 import unittest
-from jt.jnius import JavaClass, MetaJavaClass, JavaMethod
+from jnius import JavaClass, MetaJavaClass, JavaMethod
+from jnius import metaclass, java_class     # <AK> for jt.jnius additions
+from jnius import JavaField, JavaException  #            -||-
 from six import with_metaclass
-from jt.jnius import metaclass, java_class     #<AK> for additions for jt.jnius
-from jt.jnius import JavaField, JavaException  #<AK> for additions for jt.jnius
 
 class HelloWorldTest(unittest.TestCase):
 
@@ -18,7 +18,7 @@ class HelloWorldTest(unittest.TestCase):
         a = HelloWorld()
         self.assertEqual(a.hello(), 'world')
 
-    #<AK> additions for jt.jnius
+    # <AK> additions for jt.jnius
 
     def test_helloworld1(self):
 
@@ -68,4 +68,4 @@ class HelloWorldTest(unittest.TestCase):
         with self.assertRaises(JavaException) as exc:
             a = HelloWorld()
 
-    #</AK>
+    # </AK>

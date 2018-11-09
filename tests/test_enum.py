@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import absolute_import
 import unittest
 
-from jt.jnius.reflect import autoclass
+from jnius.reflect import autoclass
 
 
 class SimpleEnum(unittest.TestCase):

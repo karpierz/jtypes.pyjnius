@@ -45,9 +45,9 @@ Reflection classes
         look like::
 
             class String(JavaClass):
-                __javaclass__ == 'java/lang/String'
+                __javaclass__ = 'java/lang/String'
                 __metaclass__ = MetaJavaClass
-                __javaconstructor__ == (
+                __javaconstructor__ = (
                     '()V',
                     '(Ljava/lang/String;)V',
                     '([C)V',
@@ -166,10 +166,11 @@ Reflection functions
 
     >>> from jt.jnius import autoclass
     >>> autoclass('java.lang.System')
-    <class 'jnius.java.lang.System'>
+    <class 'jnius.reflect.java.lang.System'>
 
     autoclass can also represent a nested Java class:
 
+    >>> from jt.jnius import autoclass
     >>> autoclass('android.provider.Settings$Secure')
     <class 'jnius.reflect.android.provider.Settings$Secure'>
 
@@ -211,7 +212,7 @@ Java class implementation in Python
 
             @java_method('()Z')
             def hasNext(self):
-                return self.index < len(self.collection.data) - 1
+                return self.index < len(self.collection.data)  # <AK> fix, was: len(...) - 1
 
             @java_method('()Ljava/lang/Object;')
             def next(self):
@@ -326,8 +327,8 @@ example::
       Signature: ()V
     }
 
-The signature for methods of any android class can be easily seen by following these
-steps::
+The signature for methods of any android class can be easily seen by following
+these steps::
 
     1. $ cd path/to/android/sdk/
     2. $ cd platforms/android-xx/  # Replace xx with your android version
@@ -336,13 +337,13 @@ steps::
 JVM options and the class path
 ------------------------------
 
-JVM options need to be set before `import jt.jnius` is called, as they cannot be changed after the VM starts up.
-To this end, you can::
+JVM options need to be set before `from jt import jnius` is called, as they
+cannot be changed after the VM starts up. To this end, you can::
 
-    import jnius_config
+    from jt import jnius_config
     jnius_config.add_options('-Xrs', '-Xmx4096')
     jnius_config.set_classpath('.', '/usr/local/fem/plugins/*')
-    import jt.jnius
+    from jt import jnius
 
 If a classpath is set with these functions, it overrides any CLASSPATH environment variable.
 Multiple options or path entries should be supplied as multiple arguments to the `add_` and `set_` functions.
@@ -362,11 +363,11 @@ This functionality is not available on Android.
 Example::
 
     import threading
-    import jt.jnius
+    from jt import jnius
 
     def run(...):
         try:
-            # use jt.jnius here
+            # use jnius here
         finally:
             jnius.detach()
 

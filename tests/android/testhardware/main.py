@@ -1,7 +1,6 @@
-from __future__ import absolute_import  #<AK> missing
-from __future__ import print_function   #<AK> missing
+from __future__ import absolute_import, print_function  # <AK> missing
 from time import sleep
-from jt.jnius import autoclass
+from jnius import autoclass
 
 print('-- test hardware start!')
 

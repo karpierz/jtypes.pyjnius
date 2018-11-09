@@ -23,7 +23,8 @@ A minimal *jtypes.pyjnius* example looks something like this::
     print(stack.pop()) # --> 'hello'
 
 Just save it as `test.py` (or something similar) and run it with your Python
-interpreter::
+interpreter. Make sure not to call your application `jnius.py` because it would
+conflict with *jtypes.pyjnius* itself::
 
     $ python test.py
     world

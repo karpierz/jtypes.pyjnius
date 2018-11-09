@@ -1,0 +1,10 @@
+#!/bin/sh
+[ -z "${JAVA_HOME+set}" ] && JAVA_HOME="C:/Program Files/Java/jdk1.8.0_181"
+javac="$JAVA_HOME/bin/javac -encoding UTF-8 -g:none -deprecation -Xlint:unchecked \
+    -source 1.8 -target 1.8 -bootclasspath \"C:/Program Files/Java/jdk1.8.0_181/jre/lib/rt.jar\""
+pushd $(dirname $(readlink -f "$0"))/tests > /dev/null
+rm -rf java-classes 2> /dev/null ; mkdir java-classes
+find $(pwd)/java-src/org/jnius/ -type f -name "*.java" 2> /dev/null > build.fil
+$javac -d java-classes -classpath java-src/lib/* @build.fil
+rm -f build.fil
+popd > /dev/null

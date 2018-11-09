@@ -2,7 +2,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 import unittest
-from jt.jnius import autoclass
+from jnius import autoclass
 
 class StringArgumentForByteArrayTest(unittest.TestCase):
 
@@ -49,7 +49,7 @@ class StringArgumentForByteArrayTest(unittest.TestCase):
         self.assertEquals(arr[:1], [])
         self.assertEquals(arr.tostring(), b'')
 
-    #<AK> additions for jt.jnius
+    # <AK> additions for jt.jnius
 
     def test_bytearray_tostring(self):
         Test = autoclass('org.jnius.BasicsTest')()

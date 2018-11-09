@@ -88,15 +88,48 @@ Python::
 
 """
 
-from ._jclass  import metaclass, java_class
-from ._jclass  import MetaJavaClass, JavaClass, JavaObject, JavaException
+from ._jclass  import metaclass, java_class  # <AK> jt.jnius additions
+from ._jclass  import MetaJavaBase, MetaJavaClass
+from ._jclass  import JavaClass, JavaObject, JavaException
 from ._jfield  import JavaField,  JavaStaticField
 from ._jmethod import JavaMethod, JavaStaticMethod, JavaMultipleMethod
-from ._jproxy  import PythonJavaClass, java_method
+from ._jproxy  import java_implementer  # <AK> jt.jnius addition
+from ._jproxy  import PythonJavaClass as _PythonJavaClass, java_method
 from ._func    import cast, find_javaclass
 from ._jvm     import detach
 
-__all__ = ('metaclass', 'java_class', 'java_method', 'MetaJavaClass', 'JavaClass',
+__all__ = ('metaclass', 'java_class', 'java_implementer', 'java_method',
+           'MetaJavaBase', 'MetaJavaClass', 'PythonJavaClass', 'JavaClass',
            'JavaObject', 'JavaException', 'JavaField', 'JavaStaticField',
-           'JavaMethod', 'JavaStaticMethod', 'JavaMultipleMethod', 'PythonJavaClass',
+           'JavaMethod', 'JavaStaticMethod', 'JavaMultipleMethod',
            'cast', 'find_javaclass', 'detach')
+
+
+@metaclass(MetaJavaBase)
+class PythonJavaClass(_PythonJavaClass):
+
+    """Base class to create a java class from python"""
+
+    @java_method("()I", name="hashCode")
+    def hashCode(self):
+
+        HASHCODE_MAX = 2 ** 31 - 1
+        return id(self) % HASHCODE_MAX
+
+    @java_method("()Ljava/lang/String;", name="hashCode")
+    def hashCode_(self):
+
+        return "{}".format(self.hashCode())
+
+    @java_method("()Ljava/lang/String;", name="toString")
+    def toString(self):
+
+        return repr(self)
+
+    @java_method("(Ljava/lang/Object;)Z", name="equals")
+    def equals(self, other):
+
+        return self.hashCode() == other.hashCode()
+
+
+del _PythonJavaClass

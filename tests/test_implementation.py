@@ -4,7 +4,11 @@ from __future__ import division
 from __future__ import absolute_import
 import sys
 import unittest
-from jt.jnius.reflect import autoclass
+from jnius.reflect import autoclass
+
+def py2_decode(str):
+    # <AK> added
+    return str.decode('utf-8') if sys.version_info < (3, 0) else str
 
 
 class ImplementationTest(unittest.TestCase):
@@ -29,6 +33,5 @@ class ImplementationTest(unittest.TestCase):
         emoji = u'\U0001F602'
         stack.push(emoji)
         popped = stack.pop()
-        if sys.version_info < (3, 0):
-            popped = popped.decode('utf-8')
+        popped = py2_decode(popped)  # <AK> chanded to use of py2_decode
         self.assertEquals(emoji, popped)

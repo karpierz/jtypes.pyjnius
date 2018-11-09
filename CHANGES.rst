@@ -1,13 +1,28 @@
 Changelog
 =========
 
+1.1.4b1 (2018-11-08)
+--------------------
+- Synchro with pyjnius master branch.
+- Update of the required setuptools version.
+- Minor setup and tests improvements.
+
+1.1.4b0 (2018-10-26)
+--------------------
+- Synchro with pyjnius master branch.
+
+1.1.2b4 (2018-05-23)
+--------------------
+- Bug fixes in jnius_config.
+- Synchro with pyjnius master branch.
+
 1.1.2b3 (2018-05-22)
 --------------------
-- Update required setuptools version.
+- Update of the required setuptools version.
 
 1.1.2b2 (2018-02-26)
 --------------------
-- Improve and simplify setup and packaging.
+- Improvement and simplification of setup and packaging.
 
 1.1.2b1 (2018-01-29)
 --------------------

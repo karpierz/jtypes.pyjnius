@@ -6,13 +6,14 @@ from __future__ import absolute_import, print_function
 
 import unittest
 import sys
-import os.path
+import os
+import importlib
 import logging
 
 from . import test_dir
 
 
-def test_suite(names=None, omit=("runtests",)):
+def test_suite(names=None, omit=("run",)):
 
     from . import __name__ as pkg_name
     from . import __path__ as pkg_path
@@ -30,14 +31,22 @@ def main():
 
     print("Running testsuite", "\n", file=sys.stderr)
 
-    import jt.jnius_config
-    jt.jnius_config.set_classpath(os.path.join(test_dir, "java-classes"))
+    sys.modules["jnius_config"] = importlib.import_module("jt.jnius_config")
+
+    import jnius_config
+    jnius_config.set_classpath(os.path.join(test_dir, "java-classes"))
+
+    sys.modules["jnius"]            = importlib.import_module("jt.jnius")
+    sys.modules["jnius.reflect"]    = importlib.import_module("jt.jnius.reflect")
+    sys.modules["jnius.signatures"] = importlib.import_module("jt.jnius.signatures")
 
     try:
         tests = test_suite(sys.argv[1:] or None)
         result = unittest.TextTestRunner(verbosity=2).run(tests)
     finally:
-        pass
+        from jt.jnius._jvm      import JVM
+        from jt.jnius._platform import stop_jvm
+        stop_jvm(JVM.jvm)
 
     sys.exit(0 if result.wasSuccessful() else 1)
 
