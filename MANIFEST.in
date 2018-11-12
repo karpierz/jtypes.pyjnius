@@ -4,14 +4,19 @@ include LICENSE
 include tox.ini
 
 graft src
-#prune src/jt/jnius/_typehandler
-#include src/jt/jnius/_typehandler/__init__.py
-#exclude src/jt/jnius/_jproxy.py
+exclude src/jt/jnius/_conversion.py
+exclude src/jt/jnius/_jclass.py
+exclude src/jt/jnius/_jproxy.py
+prune src/jt/jnius/_typehandler
+include src/jt/jnius/_typehandler/__init__.py
 
 graft docs
 prune docs/_build
+recursive-exclude docs *.org *.old *.new
 
 graft tests
+exclude tests/_info_.txt
+recursive-exclude tests *.org *.old *.new
 
 global-exclude .build .build.*
 global-exclude *.py[co] __pycache__

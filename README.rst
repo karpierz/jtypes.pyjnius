@@ -11,7 +11,7 @@ Overview
   | **jtypes.pyjnius** is a bridge between Python and Java, allowing these to intercommunicate.
   | It is an effort to allow python programs full access to Java class libraries.
 
-  `PyPI record <https://pypi.python.org/pypi/jtypes.pyjnius>`__.
+  `PyPI record`_.
 
   | **jtypes.pyjnius** is a lightweight Python package, based on the *ctypes* or *cffi* library.
   | It is an almost fully compliant implementation of Kivy Team's **PyJNIus** package
@@ -20,7 +20,7 @@ Overview
 About PyJNIus:
 --------------
 
-Borrowed from the `original website <https://pyjnius.readthedocs.io>`__:
+Borrowed from the `original website`_:
 
   **PyJNIus** is a Python library for accessing Java classes.
 
@@ -81,11 +81,11 @@ To ensure everything is running correctly you can run the tests using::
 Development
 ===========
 
-Visit `development page <https://github.com/karpierz/jtypes.pyjnius>`__
+Visit `development page`_
 
 Installation from sources:
 
-Clone the `sources <https://github.com/karpierz/jtypes.pyjnius>`__ and run::
+Clone the `sources`_ and run::
 
     python -m pip install ./jtypes.pyjnius
 
@@ -112,3 +112,8 @@ Authors
 =======
 
 * Adam Karpierz <adam@karpierz.net>
+
+.. _PyPI record: https://pypi.python.org/pypi/jtypes.pyjnius
+.. _original website: https://pyjnius.readthedocs.io
+.. _development page: https://github.com/karpierz/jtypes.pyjnius
+.. _sources: https://github.com/karpierz/jtypes.pyjnius
