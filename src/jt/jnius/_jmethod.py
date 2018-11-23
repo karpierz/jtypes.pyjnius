@@ -368,6 +368,6 @@ class JavaStaticMethod(JavaMethod):
 
     def __new__(cls, definition, **kwargs):
 
+        kwargs["static"] = True
         self = super(JavaStaticMethod, cls).__new__(cls, definition, **kwargs)
-        self.is_static = True
         return self
