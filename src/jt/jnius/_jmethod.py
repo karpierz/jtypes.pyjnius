@@ -115,6 +115,51 @@ class _JavaMethodOverload(object):
     jcls = property(lambda self: self._jclass.handle
                     if self._jclass is not None else jni.obj(jni.jclass))
 
+    def _make_arguments(self, args):
+
+        from .__config__ import config
+
+        jvm = self._jclass.jvm if self.is_static else JVM.jvm
+
+        par_descrs = self._definition_args
+        par_count  = len(par_descrs)
+        is_varargs = self.is_varargs
+        perm_count = (par_count - 1) if is_varargs else par_count
+
+        if is_varargs:
+            args = args[:perm_count] + (args[perm_count:],)
+
+        jargs = jvm.JArguments(par_count)
+        for pos, arg_definition, arg in zip(count(), par_descrs, args):
+            thandler = jvm.type_manager.get_handler(arg_definition)
+            if config.getboolean("WITH_VALID", False) and not thandler.valid(arg):
+                raise ValueError("Parameter value is not valid for required parameter type.")
+            thandler.setArgument(arg_definition, jargs, pos, arg)
+
+        return jargs
+
+    def _close_arguments(self, jargs, args):
+
+        par_descrs = self._definition_args
+        par_count  = len(par_descrs)
+        is_varargs = self.is_varargs
+        perm_count = (par_count - 1) if is_varargs else par_count
+
+        if is_varargs:
+            args = args[:perm_count] + (args[perm_count:],)
+
+        for pos, arg_definition, arg in zip(count(), par_descrs, args):
+            jarg = jargs.arguments[pos]
+            is_array = (arg_definition[0] == "[")
+            if is_array and not isinstance(self, JavaConstructor):
+                elem_definition = arg_definition[1:]
+                jarr = jargs.jvm.JArray(None, jarg.l, borrowed=True) if jarg.l else None
+                result = convert_jarray_to_python(elem_definition, jarr)
+                try:
+                    arg[:] = result
+                except TypeError:
+                    pass
+
 
 class JavaConstructor(_JavaMethodOverload):
 
@@ -176,66 +221,17 @@ class JavaConstructor(_JavaMethodOverload):
         # get the java constructor
         constructorID = jenv.GetMethodID(self._jclass.handle,
                                          b"<init>", self._definition.encode("utf-8"))
-        jargs = self.__make_arguments(args)
+        jargs = self._make_arguments(args)
         try:
             from ..jvm.jframe import JFrame
             with JFrame(jenv, 1):
                 # create the object
                 jobj  = jenv.NewObject(self._jclass.handle, constructorID, jargs.arguments)
                 jself = jvm.JObject(jenv, jobj) if jobj else None
-            self.__close_arguments(jargs, args)
+            self._close_arguments(jargs, args)
         except jni.Throwable as exc:
             raise JavaException.__exception__(jvm.JException(exc))
         return jself
-
-    def __make_arguments(self, args):
-
-        from .__config__ import config
-
-        jvm = JVM.jvm
-
-        par_descrs = self._definition_args
-        par_count  = len(par_descrs)
-        is_varargs = self.is_varargs
-        perm_count = (par_count - 1) if is_varargs else par_count
-
-        if is_varargs:
-            args = args[:perm_count] + (args[perm_count:],)
-
-        jargs = jvm.JArguments(par_count)
-        if args:
-            for pos, arg_definition in enumerate(par_descrs):
-                arg = args[pos]
-                thandler = jvm.type_manager.get_handler(arg_definition)
-                if config.getboolean("WITH_VALID", False) and not thandler.valid(arg):
-                    raise ValueError("Parameter value is not valid for required parameter type.")
-                thandler.setArgument(arg_definition, jargs, pos, arg)
-
-        return jargs
-
-    def __close_arguments(self, jargs, args):
-
-        par_descrs = self._definition_args
-        par_count  = len(par_descrs)
-        is_varargs = self.is_varargs
-        perm_count = (par_count - 1) if is_varargs else par_count
-
-        if is_varargs:
-            args = args[:perm_count] + (args[perm_count:],)
-
-        for pos, arg_definition in enumerate(par_descrs):
-            arg  = args[pos]
-            jarg = jargs.arguments[pos]
-            is_array = (arg_definition[0] == "[")
-            if is_array:
-                continue #!!!
-                elem_definition = arg_definition[1:]
-                jarr = jargs.jvm.JArray(None, jarg.l, borrowed=True) if jarg.l else None
-                result = convert_jarray_to_python(elem_definition, jarr)
-                try:
-                    arg[:] = result
-                except TypeError:
-                    pass
 
 
 @public
@@ -326,9 +322,9 @@ class JavaMethod(_JavaMethodOverload):
 
         jclass = self._jclass
         jmeth  = self.__jmethod()
-        jargs  = self.__make_arguments(args)
+        jargs  = self._make_arguments(args)
         result = self._thandler.callStatic(jmeth, jclass, jargs)
-        self.__close_arguments(jargs, args)
+        self._close_arguments(jargs, args)
         return result
 
     def __call_instance(self, this, *args):
@@ -336,9 +332,9 @@ class JavaMethod(_JavaMethodOverload):
         if not JVM.jenv:
             raise JavaException("Cannot call instance method on a un-instantiated class")
         jmeth  = self.__jmethod()
-        jargs  = self.__make_arguments(args)
+        jargs  = self._make_arguments(args)
         result = self._thandler.callInstance(jmeth, this, jargs)
-        self.__close_arguments(jargs, args)
+        self._close_arguments(jargs, args)
         return result
 
     @annotate('jt.jvm.JMethod')
@@ -365,51 +361,6 @@ class JavaMethod(_JavaMethodOverload):
                     raise JavaException("Unable to find the method {}({})".format(name, definition))
 
         return JMethod(None, 1, borrowed=True)  # 1 - trick to avoid exception
-
-    def __make_arguments(self, args):
-
-        from .__config__ import config
-
-        jvm = self._jclass.jvm if self.is_static else JVM.jvm
-
-        par_descrs = self._definition_args
-        par_count  = len(par_descrs)
-        is_varargs = self.is_varargs
-        perm_count = (par_count - 1) if is_varargs else par_count
-
-        if is_varargs:
-            args = args[:perm_count] + (args[perm_count:],)
-
-        jargs = jvm.JArguments(par_count)
-        for pos, arg_definition, arg in zip(count(), par_descrs, args):
-            thandler = jvm.type_manager.get_handler(arg_definition)
-            if config.getboolean("WITH_VALID", False) and not thandler.valid(arg):
-                raise ValueError("Parameter value is not valid for required parameter type.")
-            thandler.setArgument(arg_definition, jargs, pos, arg)
-
-        return jargs
-
-    def __close_arguments(self, jargs, args):
-
-        par_descrs = self._definition_args
-        par_count  = len(par_descrs)
-        is_varargs = self.is_varargs
-        perm_count = (par_count - 1) if is_varargs else par_count
-
-        if is_varargs:
-            args = args[:perm_count] + (args[perm_count:],)
-
-        for pos, arg_definition, arg in zip(count(), par_descrs, args):
-            jarg = jargs.arguments[pos]
-            is_array = (arg_definition[0] == "[")
-            if is_array:
-                elem_definition = arg_definition[1:]
-                jarr = jargs.jvm.JArray(None, jarg.l, borrowed=True) if jarg.l else None
-                result = convert_jarray_to_python(elem_definition, jarr)
-                try:
-                    arg[:] = result
-                except TypeError:
-                    pass
 
 
 @public
