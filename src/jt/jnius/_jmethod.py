@@ -12,9 +12,11 @@ from ..jvm.lib import public
 from ..jvm.lib import cached
 from ..        import jni
 
-from ._constants import EMatchType
-from ._jclass    import JavaException
-from ._jvm       import JVM
+from ._constants  import EMatchType
+from ._jclass     import JavaException
+from ._jvm        import JVM
+from ._conversion import convert_jarray_to_python
+from ._util       import parse_definition
 
 
 @public
@@ -96,7 +98,25 @@ class JavaMultipleMethod(object):
         return best_ovr, best_score
 
 
-class JavaConstructor(object):
+class _JavaMethodOverload(object):
+
+    def __new__(cls, definition, **kwargs):
+
+        self = super(_JavaMethodOverload, cls).__new__(cls)
+        self.is_static   = kwargs.get("static",  False)
+        self.is_varargs  = kwargs.get("varargs", False)
+        self._definition = definition
+        self._definition_return, self._definition_args = parse_definition(self._definition)
+        self._jclass     = None  # jt.jvm.JClass
+        self.name        = None
+        self._thandler   = None
+        return self
+
+    jcls = property(lambda self: self._jclass.handle
+                    if self._jclass is not None else jni.obj(jni.jclass))
+
+
+class JavaConstructor(_JavaMethodOverload):
 
     """Used to resolve a Java constructor, and do the call"""
 
@@ -104,24 +124,17 @@ class JavaConstructor(object):
 
     def __new__(cls, definition, **kwargs):
 
-        from ._util import parse_definition
-
-        self = super(JavaConstructor, cls).__new__(cls)
-        self.is_static  = True
-        self.is_varargs = kwargs.get("varargs", False)
-        self._definition = definition
-        _, self._definition_args = parse_definition(self._definition)
-        self.__jclass   = None  # jt.jvm.JClass
-        self.name       = "<init>"
+        kwargs["static"] = True
+        self = super(JavaConstructor, cls).__new__(cls, definition, **kwargs)
+        self._definition_return = None 
         return self
-
-    jcls = property(lambda self: self.__jclass.handle
-                    if self.__jclass is not None else jni.obj(jni.jclass))
 
     @annotate(jclass='jt.jvm.JClass')
     def _set_resolve_info(self, jclass):
 
-        self.__jclass = jclass
+        self._jclass   = jclass
+        self.name      = "<init>"
+        self._thandler = None
 
     def _match_args(self, args):
 
@@ -133,11 +146,11 @@ class JavaConstructor(object):
         is_varargs = False
         perm_count = (par_count - 1) if is_varargs else par_count
 
-        if arg_count != perm_count:
-            # if the number of arguments expected is not the same as the number of arguments
-            # the method gets it cannot be the method we are looking for except if the method
-            # has varargs aka. it takes an undefined number of arguments
-            return EMatchType.NONE
+        if is_varargs:
+            args = args[:perm_count] + (args[perm_count:],)
+        else:
+            if arg_count != perm_count:
+                return EMatchType.NONE
 
         # if the method has the good number of arguments and doesn't take varargs
         # increment the score so that it takes precedence over a method with the same
@@ -145,7 +158,7 @@ class JavaConstructor(object):
         # (Integer, Integer)          takes precedence over (Integer, Integer, Integer...)
         # (Integer, Integer, Integer) takes precedence over (Integer, Integer, Integer...)
 
-        score = EMatchType.PERFECT
+        score = 0 if is_varargs else EMatchType.PERFECT
         for pos, arg_definition, arg in zip(count(), par_descrs, args):
             thandler = jvm.type_manager.get_handler(arg_definition)
             match_level = thandler.match(arg)
@@ -161,14 +174,14 @@ class JavaConstructor(object):
         jenv = JVM.jenv
 
         # get the java constructor
-        constructorID = jenv.GetMethodID(self.__jclass.handle,
+        constructorID = jenv.GetMethodID(self._jclass.handle,
                                          b"<init>", self._definition.encode("utf-8"))
         jargs = self.__make_arguments(args)
         try:
             from ..jvm.jframe import JFrame
             with JFrame(jenv, 1):
                 # create the object
-                jobj  = jenv.NewObject(self.__jclass.handle, constructorID, jargs.arguments)
+                jobj  = jenv.NewObject(self._jclass.handle, constructorID, jargs.arguments)
                 jself = jvm.JObject(jenv, jobj) if jobj else None
             self.__close_arguments(jargs, args)
         except jni.Throwable as exc:
@@ -202,8 +215,6 @@ class JavaConstructor(object):
 
     def __close_arguments(self, jargs, args):
 
-        from ._conversion import convert_jarray_to_python
-
         par_descrs = self._definition_args
         par_count  = len(par_descrs)
         is_varargs = self.is_varargs
@@ -228,7 +239,7 @@ class JavaConstructor(object):
 
 
 @public
-class JavaMethod(object):
+class JavaMethod(_JavaMethodOverload):
 
     """Used to resolve a Java method, and do the call"""
 
@@ -241,34 +252,24 @@ class JavaMethod(object):
 
     def __new__(cls, definition, **kwargs):
 
-        from ._util import parse_definition
-
-        self = super(JavaMethod, cls).__new__(cls)
-        self.is_static  = kwargs.get("static",  False)
-        self.is_varargs = kwargs.get("varargs", False)
-        self.__definition = definition
-        self.__definition_return, self.__definition_args = parse_definition(self.__definition)
-        self.__jclass   = None  # jt.jvm.JClass
-        self.j_self     = None
-        self.name       = None
-        self.__thandler = None
+        self = super(JavaMethod, cls).__new__(cls, definition, **kwargs)
+        self.j_self = None
         return self
-
-    jcls = property(lambda self: self.__jclass.handle
-                    if self.__jclass is not None else jni.obj(jni.jclass))
 
     @annotate(jclass='jt.jvm.JClass', this=Optional['JObjectBase'], name=bytes)
     def _set_resolve_info(self, jclass, this, name):
 
-        self.__jclass   = jclass
-        self.j_self     = this
-        self.name       = name
-        self.__thandler = self.__jclass.jvm.type_manager.get_handler(self.__definition_return)
+        self._jclass   = jclass
+        self.j_self    = this
+        self.name      = name
+        self._thandler = self._jclass.jvm.type_manager.get_handler(self._definition_return)
 
     def _match_args(self, args):
 
+        jvm = self._jclass.jvm
+
         arg_count  = len(args)
-        par_descrs = self.__definition_args
+        par_descrs = self._definition_args
         par_count  = len(par_descrs)
         is_varargs = self.is_varargs
         perm_count = (par_count - 1) if is_varargs else par_count
@@ -287,7 +288,7 @@ class JavaMethod(object):
 
         score = 0 if is_varargs else EMatchType.PERFECT
         for pos, arg_definition, arg in zip(count(), par_descrs, args):
-            thandler = self.__jclass.jvm.type_manager.get_handler(arg_definition)
+            thandler = jvm.type_manager.get_handler(arg_definition)
             match_level = thandler.match(arg)
             if match_level == EMatchType.NONE:
                 return EMatchType.NONE
@@ -309,7 +310,7 @@ class JavaMethod(object):
     def __call__(self, *args):
 
         arg_count  = len(args)
-        par_count  = len(self.__definition_args)
+        par_count  = len(self._definition_args)
         is_varargs = self.is_varargs
         perm_count = (par_count - 1) if is_varargs else par_count
 
@@ -323,10 +324,10 @@ class JavaMethod(object):
 
     def __call_static(self, *args):
 
-        jclass = self.__jclass
+        jclass = self._jclass
         jmeth  = self.__jmethod()
         jargs  = self.__make_arguments(args)
-        result = self.__thandler.callStatic(jmeth, jclass, jargs)
+        result = self._thandler.callStatic(jmeth, jclass, jargs)
         self.__close_arguments(jargs, args)
         return result
 
@@ -336,7 +337,7 @@ class JavaMethod(object):
             raise JavaException("Cannot call instance method on a un-instantiated class")
         jmeth  = self.__jmethod()
         jargs  = self.__make_arguments(args)
-        result = self.__thandler.callInstance(jmeth, this, jargs)
+        result = self._thandler.callInstance(jmeth, this, jargs)
         self.__close_arguments(jargs, args)
         return result
 
@@ -346,12 +347,12 @@ class JavaMethod(object):
         if self.name is None:
             raise JavaException("Unable to find a None method!")
 
-        jvm = self.__jclass.jvm if self.is_static else JVM.jvm
+        jvm = self._jclass.jvm if self.is_static else JVM.jvm
 
         name       = self.name
         is_static  = self.is_static
-        jclass     = self.__jclass
-        definition = self.__definition
+        jclass     = self._jclass
+        definition = self._definition
 
         class JMethod(jvm.JMethod):
             @cached
@@ -369,9 +370,9 @@ class JavaMethod(object):
 
         from .__config__ import config
 
-        jvm = self.__jclass.jvm if self.is_static else JVM.jvm
+        jvm = self._jclass.jvm if self.is_static else JVM.jvm
 
-        par_descrs = self.__definition_args
+        par_descrs = self._definition_args
         par_count  = len(par_descrs)
         is_varargs = self.is_varargs
         perm_count = (par_count - 1) if is_varargs else par_count
@@ -390,9 +391,7 @@ class JavaMethod(object):
 
     def __close_arguments(self, jargs, args):
 
-        from ._conversion import convert_jarray_to_python
-
-        par_descrs = self.__definition_args
+        par_descrs = self._definition_args
         par_count  = len(par_descrs)
         is_varargs = self.is_varargs
         perm_count = (par_count - 1) if is_varargs else par_count

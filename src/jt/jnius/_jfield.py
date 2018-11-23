@@ -55,19 +55,14 @@ class JavaField(object):
         if self.__jfield is None:
             raise JavaException("Unable to find a None field!")
 
+        if (self.__definition[0] != "[" and
+            config.getboolean("WITH_VALID", False) and not self.__thandler.valid(value)):
+            raise ValueError("Assigned value is not valid for required field type.")
+
         if this is None:
-            raise NotImplementedError("set not implemented for static fields")
-
-        if self.__definition[0] != "[":
-
-            if config.getboolean("WITH_VALID", False) and not self.__thandler.valid(value):
-                raise ValueError("Assigned value is not valid for required field type.")
-
-            self.__thandler.setInstance(self.__jfield, this.j_self, value)
+            self.__thandler.setStatic(self.__jfield, self.__jclass, value)
         else:
-            fld, this, val = self.__jfield, this.j_self, value
-
-            elem_definition = self.__definition[1:]
+            self.__thandler.setInstance(self.__jfield, this.j_self, value)
 
 
 @public

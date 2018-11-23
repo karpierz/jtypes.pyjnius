@@ -155,6 +155,14 @@ class ProxyTest(unittest.TestCase):
             a = TestImplem(*coll)
             print(a)
             print(dir(a))
+            # <AK> added
+            self.assertEqual(a.hashCode_(), str(a.hashCode()))
+            self.assertEqual(a.hashCode_(), str(a.hashCode()))
+            self.assertIs(a.equals(a), True)
+            self.assertIs(a.equals(TestImplem(*coll)), False)
+            self.assertEqual(super(TestImplem, a).toString(), str(a))
+            self.assertEqual(a.toString(), str(a))
+            # </AK>
 
             print('2: Tries to get a ListIterator')
             iterator = a.listIterator()

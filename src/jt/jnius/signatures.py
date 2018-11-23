@@ -29,7 +29,7 @@ Methods can return just a standard primitive type:
 Or you can use autoclass proxies to specify Java classes
 for return types.
 
->>> from jnius import autoclass
+>>> from jt.jnius import autoclass
 >>> String = autoclass("java.lang.String")
 >>> signature(String, ())
 '()Ljava/lang/String;'
