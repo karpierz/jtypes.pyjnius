@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2018 Adam Karpierz
+# Copyright (c) 2014-2019 Adam Karpierz
 # Licensed under the MIT License
 # http://opensource.org/licenses/MIT
 
@@ -13,13 +13,14 @@ from ._jclass import JavaClass, JavaException
 @annotate(obj=JavaClass)
 def cast(destclass, obj):
 
-    from .reflect import autoclass
+    from ._conversion import str_types
+    from .reflect     import autoclass
 
-    if isinstance(destclass, (builtins.str, str)):
+    if isinstance(destclass, str_types):
         destclass = autoclass(destclass)
 
     jobj = destclass(noinstance=True)
-    jobj._instantiate_from(obj.j_self, borrowed=True)
+    jobj._instantiate_from(obj.j_self, own=False)
     return jobj
 
 

@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2018 Adam Karpierz
+# Copyright (c) 2014-2019 Adam Karpierz
 # Licensed under the MIT License
 # http://opensource.org/licenses/MIT
 
@@ -33,14 +33,14 @@ def invoke(env, this,
     try:
         method, args = None, []
         try:
-            method = jt_jvm.JMethod(None, jmethod, borrowed=True)
+            method = jt_jvm.JMethod(None, jmethod, own=False)
 
             param_signatures = tuple(x.getSignature() for x in method.getParameterTypes())
 
             with JFrame(jenv, len(param_signatures)):
                 for idx, par_signature in enumerate(param_signatures):
                     jarg = jenv.GetObjectArrayElement(jargs, idx)
-                    jarg = jt_jvm.JObject(None, jarg, borrowed=True) if jarg else None
+                    jarg = jt_jvm.JObject(None, jarg, own=False) if jarg else None
                     par_signature = __convert_signature.get(par_signature, par_signature)
                     parg = convert_jobject_to_python(par_signature, jarg)
                     args.append(parg)

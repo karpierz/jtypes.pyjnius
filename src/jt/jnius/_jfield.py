@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2018 Adam Karpierz
+# Copyright (c) 2014-2019 Adam Karpierz
 # Licensed under the MIT License
 # http://opensource.org/licenses/MIT
 
@@ -35,7 +35,7 @@ class JavaField(object):
         try:
             self.__jfield = self.__jclass.getField(name)
         except:
-            raise JavaException("Unable to found the field {}".format(name))
+            raise JavaException("Unable to find the field {}".format(name))
         self.__thandler = self.__jfield.jvm.type_manager.get_handler(self.__definition)
 
     def __get__(self, this, cls):

@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2018 Adam Karpierz
+# Copyright (c) 2014-2019 Adam Karpierz
 # Licensed under the MIT License
 # http://opensource.org/licenses/MIT
 
@@ -43,7 +43,7 @@ class Class(object):
     getResource             = JavaMethod("(Ljava/lang/String;)Ljava/net/URL;")
     getResourceAsStream     = JavaMethod("(Ljava/lang/String;)Ljava/io/InputStream;")
     getSigners              = JavaMethod("()[Ljava/lang/Object;")
-    getSuperclass           = JavaMethod("()Ljava/lang/reflect/Class;")
+    getSuperclass           = JavaMethod("()Ljava/lang/Class;")
     isArray                 = JavaMethod("()Z")
     isAssignableFrom        = JavaMethod("(Ljava/lang/reflect/Class;)Z")
     isInstance              = JavaMethod("(Ljava/lang/Object;)Z")
@@ -132,35 +132,38 @@ def autoclass(clsname):
         definitions.append((signature, is_varargs))
     clsdict["__javaconstructor__"] = definitions
 
-    methods       = jclass.getMethods()
-    methods_names = [method.getName() for method in methods]
-    for method, method_name in zip(methods, methods_names):
-        if method_name in clsdict:
-            continue
-        if methods_names.count(method_name) == 1:
-            # only one method available
-            mods = method.getModifiers()
-            is_static  = EJavaModifiers.STATIC in mods
-            signature  = method.getSignature()
-            is_varargs = method.isVarArgs()
-            clsdict[method_name] = (JavaStaticMethod(signature, varargs=is_varargs)
-                                    if is_static else
-                                    JavaMethod(signature, varargs=is_varargs))
-            if method_name != "getClass" and bean_getter(method_name) and len(method.getParameterTypes()) == 0:
-                clsdict[lower_name(method_name[2 if method_name.startswith("is") else 3:])] = \
-                        (lambda n: property(lambda self: getattr(self, n)()))(method_name)
-        else:
-            # multiple signatures
-            definitions = []
-            for method, subname in zip(methods, methods_names):
-                if subname != method_name:
-                    continue
+    parent_class = jclass
+    while parent_class is not None:
+        methods       = parent_class.getDeclaredMethods()
+        methods_names = [method.getName() for method in methods]
+        for method, method_name in zip(methods, methods_names):
+            if method_name in clsdict:
+                continue
+            if methods_names.count(method_name) == 1:
+                # only one method available
                 mods = method.getModifiers()
                 is_static  = EJavaModifiers.STATIC in mods
                 signature  = method.getSignature()
                 is_varargs = method.isVarArgs()
-                definitions.append((signature, is_static, is_varargs))
-            clsdict[method_name] = JavaMultipleMethod(definitions)
+                clsdict[method_name] = (JavaStaticMethod(signature, varargs=is_varargs)
+                                        if is_static else
+                                        JavaMethod(signature, varargs=is_varargs))
+                if method_name != "getClass" and bean_getter(method_name) and len(method.getParameterTypes()) == 0:
+                    clsdict[lower_name(method_name[2 if method_name.startswith("is") else 3:])] = \
+                            (lambda n: property(lambda self: getattr(self, n)()))(method_name)
+            else:
+                # multiple signatures
+                definitions = []
+                for method, subname in zip(methods, methods_names):
+                    if subname != method_name:
+                        continue
+                    mods = method.getModifiers()
+                    is_static  = EJavaModifiers.STATIC in mods
+                    signature  = method.getSignature()
+                    is_varargs = method.isVarArgs()
+                    definitions.append((signature, is_static, is_varargs))
+                clsdict[method_name] = JavaMultipleMethod(definitions)
+        parent_class = parent_class.getSuperclass()
 
     def _getitem(self, idx):
         try:

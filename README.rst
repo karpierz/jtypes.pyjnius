@@ -59,7 +59,7 @@ Prerequisites:
 + Python 2.7 or Python 3.4 or later
 
   * http://www.python.org/
-  * 2.7 and 3.6 are primary test environments.
+  * 2.7 and 3.7 are primary test environments.
   * For usage with python-for-android:
 
     #. Get http://github.com/kivy/python-for-android
@@ -102,7 +102,7 @@ Prerequisites:
 License
 =======
 
-  | Copyright (c) 2014-2018 Adam Karpierz
+  | Copyright (c) 2014-2019 Adam Karpierz
   |
   | Licensed under the MIT License
   | http://opensource.org/licenses/MIT

@@ -5,7 +5,7 @@ from __future__ import division
 from __future__ import absolute_import
 # from six.moves import range  # <AK> unnecessary
 import unittest  # <AK> for jt.jnius additions
-import sys                                  # <AK> needed for enhancements
+import sys
 if sys.version_info.major >= 3: long = int  # <AK> needed for enhancements
 
 from jnius import autoclass, java_method, PythonJavaClass, cast
@@ -210,8 +210,9 @@ class ProxyTest(unittest.TestCase):
             print('Collections.max():', ret)
             self.assertEqual(ret, max(coll))  # <AK> added
             # XXX We have issues for methods with multiple signature
-            ret = Collections.max(a2)
-            self.assertEqual(ret, max(coll))  # <AK> added
+            if sys.version_info >= (3, 0):
+                ret = Collections.max(a2)
+                self.assertEqual(ret, max(coll))  # <AK> added
 
             print('Order of data before Collections.reverse():', a.data)
             Collections.reverse(a)

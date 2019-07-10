@@ -3,6 +3,9 @@ include CHANGES.rst
 include LICENSE
 include tox.ini
 
+graft docs
+prune docs/_build
+
 graft src
 exclude src/jt/jnius/_conversion.py
 exclude src/jt/jnius/_jclass.py
@@ -11,12 +14,8 @@ prune src/jt/jnius/_typehandler
 include src/jt/jnius/_typehandler/__init__.py
 include src/jt/jnius/_typehandler/void_handler.py
 
-graft docs
-prune docs/_build
-recursive-exclude docs *.org *.old *.new
-
 graft tests
-exclude tests/_info_.txt
+exclude tests/_info_.txt tests/_report_.txt
 recursive-exclude tests *.org *.old *.new
 
 global-exclude .build .build.*

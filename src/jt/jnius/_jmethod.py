@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2018 Adam Karpierz
+# Copyright (c) 2014-2019 Adam Karpierz
 # Licensed under the MIT License
 # http://opensource.org/licenses/MIT
 
@@ -70,12 +70,8 @@ class JavaMultipleMethod(object):
 
         # try to match our args to a signature
 
-        best_ovr, _ = self.__match_overload(self.__instance_overloads
-                                            if self.j_self else
-                                            self.__static_overloads,
-                                            *args)
-        if best_ovr is None:
-            raise JavaException("No methods matching your arguments")
+        overloads = self.__instance_overloads if self.j_self else self.__static_overloads
+        best_ovr, _ = self.__match_overload(overloads, *args)
 
         best_ovr.j_self = self.j_self
         return best_ovr(*args)
@@ -84,13 +80,14 @@ class JavaMultipleMethod(object):
 
         scores = []
         for signature, ovr in overloads.items():
-            score = ovr._match_args(args)
+            score = ovr._match_args(*args)
             if score > 0:
                 scores.append((score, signature))
         scores.sort()
 
         if not scores:
-            return None, EMatchType.NONE
+            raise JavaException("No methods matching your arguments, available: "
+                                "{}".format([signature for signature in overloads]))
 
         best_score, signature = scores[-1]
         best_ovr = overloads[signature]
@@ -152,9 +149,8 @@ class _JavaMethodOverload(object):
             jarg = jargs.arguments[pos]
             is_array = (arg_definition[0] == "[")
             if is_array and not isinstance(self, JavaConstructor):
-                elem_definition = arg_definition[1:]
-                jarr = jargs.jvm.JArray(None, jarg.l, borrowed=True) if jarg.l else None
-                result = convert_jarray_to_python(elem_definition, jarr)
+                jarr = jargs.jvm.JArray(None, jarg.l, own=False) if jarg.l else None
+                result = convert_jarray_to_python(arg_definition, jarr)
                 try:
                     arg[:] = result
                 except TypeError:
@@ -181,7 +177,7 @@ class JavaConstructor(_JavaMethodOverload):
         self.name      = "<init>"
         self._thandler = None
 
-    def _match_args(self, args):
+    def _match_args(self, *args):
 
         jvm = JVM.jvm
 
@@ -260,7 +256,7 @@ class JavaMethod(_JavaMethodOverload):
         self.name      = name
         self._thandler = self._jclass.jvm.type_manager.get_handler(self._definition_return)
 
-    def _match_args(self, args):
+    def _match_args(self, *args):
 
         jvm = self._jclass.jvm
 
@@ -311,7 +307,8 @@ class JavaMethod(_JavaMethodOverload):
         perm_count = (par_count - 1) if is_varargs else par_count
 
         if (arg_count < perm_count) if is_varargs else (arg_count != perm_count):
-            raise JavaException("Invalid call, number of argument mismatch")
+            raise JavaException("Invalid call, number of argument mismatch, "
+                                "got {} need {}".format(arg_count, perm_count))
 
         if self.is_static:
             return self.__call_static(*args)
@@ -327,13 +324,13 @@ class JavaMethod(_JavaMethodOverload):
         self._close_arguments(jargs, args)
         return result
 
-    def __call_instance(self, this, *args):
+    def __call_instance(self, jthis, *args):
 
         if not JVM.jenv:
             raise JavaException("Cannot call instance method on a un-instantiated class")
         jmeth  = self.__jmethod()
         jargs  = self._make_arguments(args)
-        result = self._thandler.callInstance(jmeth, this, jargs)
+        result = self._thandler.callInstance(jmeth, jthis, jargs)
         self._close_arguments(jargs, args)
         return result
 
@@ -360,7 +357,7 @@ class JavaMethod(_JavaMethodOverload):
                 except:
                     raise JavaException("Unable to find the method {}({})".format(name, definition))
 
-        return JMethod(None, 1, borrowed=True)  # 1 - trick to avoid exception
+        return JMethod(None, 1, own=False)  # 1 - trick to avoid exception
 
 
 @public

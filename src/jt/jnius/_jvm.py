@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2018 Adam Karpierz
+# Copyright (c) 2014-2019 Adam Karpierz
 # Licensed under the MIT License
 # http://opensource.org/licenses/MIT
 
@@ -58,7 +58,7 @@ class JVM(_JVM):
         return JVM._jvm if JVM._jenv else None
 
     @classproperty
-    @annotate(Optional[jni.JNIEnv])
+    #@annotate(Optional[jni.JNIEnv])
     def jenv(cls):
 
         jvm = JVM.jvm
@@ -104,8 +104,7 @@ class JVM(_JVM):
 
         if dll_path is not None:
             self._dll_path = dll_path
-
-        if self._dll_path is None:
+        elif self._dll_path is None:
             finder = JVMFinder()
             self._dll_path = finder.get_jvm_path()
 
@@ -123,14 +122,14 @@ class JVM(_JVM):
     def _create(self):
 
         from ._java import jnijnius
-        self.ProxyHandler = jnijnius.jnius_reflect_ProxyHandler()
+        self.jnius_reflect_ProxyHandler = jnijnius.jnius_reflect_ProxyHandler()
 
     @annotate(jenv=jni.JNIEnv)
     def _initialize(self, jenv):
 
-        self.ProxyHandler.initialize(jenv)
+        self.jnius_reflect_ProxyHandler.initialize(jenv)
 
     @annotate(jenv=jni.JNIEnv)
     def _dispose(self, jenv):
 
-        self.ProxyHandler.dispose(jenv)
+        self.jnius_reflect_ProxyHandler.dispose(jenv)

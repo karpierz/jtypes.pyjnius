@@ -2,6 +2,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 import unittest
+import sys
 from jnius.reflect import autoclass
 from jnius import JavaException  # <AK> added
 
@@ -23,8 +24,9 @@ class MultipleSignature(unittest.TestCase):
     def test_multiple_methods(self):
         String = autoclass('java.lang.String')
         s = String('hello')
-        self.assertEquals(s.getBytes(), [104, 101, 108, 108, 111])
-        self.assertEquals(s.getBytes('utf8'), [104, 101, 108, 108, 111])
+        if sys.version_info >= (3, 0):
+            self.assertEquals(s.getBytes(), [104, 101, 108, 108, 111])
+            self.assertEquals(s.getBytes('utf8'), [104, 101, 108, 108, 111])
         self.assertEquals(s.indexOf(ord('e')), 1)
         self.assertEquals(s.indexOf(ord('e'), 2), -1)
 
