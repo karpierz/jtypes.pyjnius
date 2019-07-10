@@ -7,12 +7,6 @@ graft docs
 prune docs/_build
 
 graft src
-exclude src/jt/jnius/_conversion.py
-exclude src/jt/jnius/_jclass.py
-exclude src/jt/jnius/_jproxy.py
-prune src/jt/jnius/_typehandler
-include src/jt/jnius/_typehandler/__init__.py
-include src/jt/jnius/_typehandler/void_handler.py
 
 graft tests
 exclude tests/_info_.txt tests/_report_.txt
