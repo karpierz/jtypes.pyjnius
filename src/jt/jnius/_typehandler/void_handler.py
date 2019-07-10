@@ -1,6 +1,6 @@
-# Copyright (c) 2014-2018 Adam Karpierz
-# Licensed under proprietary License
-# Please refer to the accompanying LICENSE file.
+# Copyright (c) 2014-2019 Adam Karpierz
+# Licensed under the MIT License
+# http://opensource.org/licenses/MIT
 
 from ...jvm.lib.compat import *
 from ...jvm.lib import annotate
@@ -20,10 +20,6 @@ class VoidHandler(_PrimitiveHandler):
     def __init__(self, state):
 
         super(VoidHandler, self).__init__(state, EJavaType.VOID, "V")
-
-    def getClassName(self):
-
-        return "void"
 
     def match(self, val):
 

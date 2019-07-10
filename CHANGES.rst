@@ -1,7 +1,19 @@
 Changelog
 =========
 
-1.1.4b4 (2018-11-08)
+1.2.1b2 (2019-07-10)
+--------------------
+- Last release for Python2.
+
+1.2.1b1 (2019-02-27)
+--------------------
+- Synchro with pyjnius master branch.
+
+1.2.1b0 (2019-02-04)
+--------------------
+- Synchro with pyjnius master branch.
+
+1.1.5b0 (2018-12-11)
 --------------------
 - Synchro with pyjnius master branch.
 - Update of the required setuptools version.
